@@ -58,6 +58,13 @@ int wait_for_cmd(const enum cmd_type t, char *param)
   return cmd;
 }
 
+int wait_for_cmd_or_socket(const enum cmd_type t, char *param, srv_connection_t *c)
+{
+  //nonvauncazz
+  return wait_for_cmd(t, param);
+}
+
+
 void init_player_one(player_t *p1)
 {
   printf("Inserisci il tuo username:");
@@ -112,7 +119,7 @@ void destroy_battle(srv_connection_t *c, player_t me)
 void connect_to_player(srv_connection_t *c, char *player, player_t me)
 {
   char buffer[50];
-  int msgt = -1, errort=-1;
+  int msgt = -1, errort = -1;
 
   if(strncmp(me.name_, player, MAX_USERNAME_LEN) == 0) //you can't play with yourself, duh
   {
@@ -120,10 +127,8 @@ void connect_to_player(srv_connection_t *c, char *player, player_t me)
     return;
   }
 
-  sprintf(buffer, "%d %s", PLAY, player);
+  sprintf(buffer, "%d %s %s", PLAY, me.name_, player);
   tcp_send(c->srv_socket_, buffer);
-
-  //memset(buffer, 0, sizeof(buffer));
 
   tcp_recv(c->srv_socket_, buffer);
 
@@ -177,7 +182,7 @@ int main(int argc, char* argv[])
   while(1)
   {
     char p[MAX_USERNAME_LEN];
-    int a = wait_for_cmd(MENU, p);
+    int a = wait_for_cmd_or_socket(MENU, p, &srv_conn);
 
     switch(a)
     {

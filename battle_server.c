@@ -142,10 +142,10 @@ void send_player_list(int a_socket)
 void game_request(int a_socket, char *buffer)
 {
   int available, msgt;
-  char pl2[MAX_USERNAME_LEN];
+  char pl2[MAX_USERNAME_LEN], pl1[MAX_USERNAME_LEN];
   addr_t opponent_address;
 
-  sscanf(buffer, "%d %s", &msgt, pl2);
+  sscanf(buffer, "%d %s %s", &msgt, pl1, pl2);
 
   //look for asked player
   available = search_player(pl2, &opponent_address);
