@@ -23,6 +23,7 @@ typedef struct player
   int udp_port_;
 
   addr_t address_;
+  int socket_;
   enum player_status status_;
 } player_t;
 

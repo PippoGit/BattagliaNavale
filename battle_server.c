@@ -42,7 +42,7 @@ void remove_player(const char* name)
   }
 }
 
-int search_player(const char* name, addr_t *addr)
+int search_player(const char* name, addr_t *addr, int *socket)
 {
   player_list_element_t *node = list;
   while(node != NULL)
@@ -50,6 +50,7 @@ int search_player(const char* name, addr_t *addr)
     if(strncmp(node->pl.name_, name, MAX_USERNAME_LEN)==0)
     {
       *addr = node->pl.address_;
+      *socket = node->pl.socket_;
       return (node->pl.status_ == FREE)?node->pl.udp_port_:-2;
     }
     node = node->next;
@@ -119,6 +120,7 @@ void new_player_connected(int a_socket, char *msg)
   p.status_ = FREE;
   len = sizeof(p.address_);
   getpeername(a_socket, (struct sockaddr *)&p.address_, &len);
+  p.socket_ = a_socket;
   insert_player(p);
 }
 
@@ -141,14 +143,15 @@ void send_player_list(int a_socket)
 
 void game_request(int a_socket, char *buffer)
 {
-  int available, msgt;
+  int available, msgt, pl1_port, pl2_socket, pl1_socket;
   char pl2[MAX_USERNAME_LEN], pl1[MAX_USERNAME_LEN];
-  addr_t opponent_address;
+  addr_t opponent_address, pl1_addr;
 
   sscanf(buffer, "%d %s %s", &msgt, pl1, pl2);
 
   //look for asked player
-  available = search_player(pl2, &opponent_address);
+  available = search_player(pl2, &opponent_address, &pl2_socket);
+  pl1_port = search_player(pl1, &pl1_addr, &pl1_socket);
 
   switch(available)
   {
@@ -156,14 +159,19 @@ void game_request(int a_socket, char *buffer)
       sprintf(buffer, "%d %d", ERROR, PLAYER_NOT_EXISTS);
       tcp_send(a_socket, buffer);
       return;
+
     case -2:
       sprintf(buffer, "%d %d", ERROR, PLAYER_OCCUPIED);
       tcp_send(a_socket, buffer);
       return;
+
     default:
       sprintf(buffer, "%d %d %s", PLAY, available, inet_ntoa(opponent_address.sin_addr));
       tcp_send(a_socket, buffer);
-
+      printf("Sonoqui!\n");
+      sprintf(buffer, "%d %s %s %d", PLAY, pl1, inet_ntoa(pl1_addr.sin_addr), pl1_port);
+      printf("DEBUG Invio a opponent: %s\n", buffer);
+      tcp_send(pl2_socket, buffer);
       return;
   }
 
@@ -207,6 +215,10 @@ void server_func(int *a_socket)
       break;
 
     case SET_FREE:
+      sscanf(buffer, "%d %s", &msg_type, name);
+      set_player_free(name);
+      break;
+
     default:
       printf("Messaggio sconosciuto... :(\n");
   }
