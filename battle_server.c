@@ -42,18 +42,43 @@ void remove_player(const char* name)
   }
 }
 
-void set_player_occupied(const char* name)
+int search_player(const char* name, addr_t *addr)
 {
   player_list_element_t *node = list;
   while(node != NULL)
   {
     if(strncmp(node->pl.name_, name, MAX_USERNAME_LEN)==0)
     {
-      node->pl.status_ = OCCUPIED;
+      *addr = node->pl.address_;
+      return (node->pl.status_ == FREE)?node->pl.udp_port_:-2;
+    }
+    node = node->next;
+  }
+  return -1;
+}
+
+void set_player_status(const char*name, enum player_status s)
+{
+  player_list_element_t *node = list;
+  while(node != NULL)
+  {
+    if(strncmp(node->pl.name_, name, MAX_USERNAME_LEN)==0)
+    {
+      node->pl.status_ = s;
       return;
     }
     node = node->next;
   }
+}
+
+void set_player_occupied(const char* name)
+{
+  set_player_status(name, OCCUPIED);
+}
+
+void set_player_free(const char* name)
+{
+  set_player_status(name, FREE);
 }
 
 void insert_player(player_t pl)
@@ -76,10 +101,11 @@ void print_player_list()
   }
 }
 
-void new_player_connected(char *msg)
+void new_player_connected(int a_socket, char *msg)
 {
   char username[MAX_USERNAME_LEN];
   int udp_port, msg_type;
+  unsigned int len;
   player_t p;
 
   sscanf(msg, "%d %s %d", &msg_type, username, &udp_port);
@@ -91,6 +117,8 @@ void new_player_connected(char *msg)
   strncpy(p.name_, username, MAX_USERNAME_LEN);
   p.udp_port_ = udp_port;
   p.status_ = FREE;
+  len = sizeof(p.address_);
+  getpeername(a_socket, (struct sockaddr *)&p.address_, &len);
   insert_player(p);
 }
 
@@ -111,6 +139,35 @@ void send_player_list(int a_socket)
   }
 }
 
+void game_request(int a_socket, char *buffer)
+{
+  int available, msgt;
+  char pl2[MAX_USERNAME_LEN];
+  addr_t opponent_address;
+
+  sscanf(buffer, "%d %s", &msgt, pl2);
+
+  //look for asked player
+  available = search_player(pl2, &opponent_address);
+
+  switch(available)
+  {
+    case -1:
+      sprintf(buffer, "%d %d", ERROR, PLAYER_NOT_EXISTS);
+      tcp_send(a_socket, buffer);
+      return;
+    case -2:
+      sprintf(buffer, "%d %d", ERROR, PLAYER_OCCUPIED);
+      tcp_send(a_socket, buffer);
+      return;
+    default:
+      sprintf(buffer, "%d %d %s", PLAY, available, inet_ntoa(opponent_address.sin_addr));
+      tcp_send(a_socket, buffer);
+      return;
+  }
+
+}
+
 void server_func(int *a_socket)
 {
   char buffer[50], name[MAX_USERNAME_LEN];
@@ -118,27 +175,37 @@ void server_func(int *a_socket)
 
   //read cmd
   tcp_recv(*a_socket, buffer);
-  printf("DEBUG: received cmd %s\n", buffer);
+  //printf("DEBUG: received cmd %s\n", buffer);
 
   sscanf(buffer, "%d", &msg_type);
 
   switch(msg_type)
   {
     case HELLO:
-      new_player_connected(buffer);
+      new_player_connected(*a_socket, buffer);
       break;
+
     case LIST:
-      print_player_list();
+      //print_player_list();
       send_player_list(*a_socket);
       break;
+
     case PLAY:
-    case ATT:
-    case SURRENDER:
+      game_request(*a_socket, buffer);
+      break;
+
     case BYE:
       sscanf(buffer, "%d %s", &msg_type, name);
       remove_player(name);
       *a_socket = -1;
       break;
+
+    case SET_OCCUPIED:
+      sscanf(buffer, "%d %s", &msg_type, name);
+      set_player_occupied(name);
+      break;
+
+    case SET_FREE:
     default:
       printf("Messaggio sconosciuto... :(\n");
   }

@@ -11,7 +11,8 @@ enum connection_status {PENDING, CONN_ESTABLISHED, TIMEOUT};
 enum map_tile {WATER, SHIP};
 enum player_status {FREE, OCCUPIED};
 enum cmd {HELP, WHO, CONNECT, QUIT, GHELP, SHOT, DISCONNECT, SHOW};
-enum msg_type {HELLO, LIST, PLAY, ATT, SURRENDER, BYE};
+enum msg_type {HELLO, LIST, PLAY, ATT, SURRENDER, BYE, ERROR, SET_OCCUPIED, SET_FREE};
+enum error_type {PLAY_WITH_YOURSELF, PLAYER_OCCUPIED, PLAYER_NOT_EXISTS};
 enum cmd_type {MENU, GAME};
 
 typedef struct sockaddr_in addr_t;
@@ -20,6 +21,8 @@ typedef struct player
 {
   char name_[MAX_USERNAME_LEN];
   int udp_port_;
+
+  addr_t address_;
   enum player_status status_;
 } player_t;
 

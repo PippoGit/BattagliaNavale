@@ -78,7 +78,7 @@ void connect_to_server(srv_connection_t* c, const player_t pl, const char* ip, c
   tcp_send(c->srv_socket_, buff);
 }
 
-void print_playerlist_from_server(srv_connection_t* c)
+void print_playerlist_from_server(srv_connection_t* c, player_t me)
 {
   char buffer[1024], name[MAX_USERNAME_LEN];
   int list_size=5, i, stat;
@@ -94,7 +94,8 @@ void print_playerlist_from_server(srv_connection_t* c)
   {
     tcp_recv(c->srv_socket_, buffer);
     sscanf(buffer, "1 %s %d", name, &stat);
-    printf("\t%s (%s)\n", name, playerstatus_desc(stat));
+    if(strncmp(name, me.name_, MAX_USERNAME_LEN))
+      printf("\t%s (%s)\n", name, playerstatus_desc(stat));
   }
 }
 
@@ -106,6 +107,49 @@ void destroy_battle(srv_connection_t *c, player_t me)
 
   //destroy data structure
   exit(0);
+}
+
+void connect_to_player(srv_connection_t *c, char *player, player_t me)
+{
+  char buffer[50];
+  int msgt = -1, errort=-1;
+
+  if(strncmp(me.name_, player, MAX_USERNAME_LEN) == 0) //you can't play with yourself, duh
+  {
+    printf("Non puoi giocare con te stesso!\n");
+    return;
+  }
+
+  sprintf(buffer, "%d %s", PLAY, player);
+  tcp_send(c->srv_socket_, buffer);
+
+  //memset(buffer, 0, sizeof(buffer));
+
+  tcp_recv(c->srv_socket_, buffer);
+
+  sscanf(buffer, "%d", &msgt);
+  switch(msgt)
+  {
+    case ERROR:
+      sscanf(buffer, "%d %d", &msgt, &errort);
+      if(errort == PLAYER_NOT_EXISTS) printf("Il giocatore richiesto e' inesistente.\n");
+      if(errort == PLAYER_OCCUPIED) printf("Il giocatore richiesto e' gia' impegnato in un'altra partita.\n");
+      return;
+
+    case PLAY:
+      printf("Giocatore esistente. Provo ad inviare la richiesta al player...");
+      sprintf(buffer, "%d %s", SET_OCCUPIED, me.name_);
+      tcp_send(c->srv_socket_, buffer);
+      return;
+  }
+
+  //richiedere connessione con il client
+
+  //aspettare che il client accetti
+
+  //se accetta, avviare la partita
+
+  //se declina, pazienza return.
 }
 
 int main(int argc, char* argv[])
@@ -132,7 +176,7 @@ int main(int argc, char* argv[])
   //suppose to have established conn
   while(1)
   {
-    char p[10];
+    char p[MAX_USERNAME_LEN];
     int a = wait_for_cmd(MENU, p);
 
     switch(a)
@@ -141,9 +185,11 @@ int main(int argc, char* argv[])
         greetings();
         break;
       case WHO:
-        print_playerlist_from_server(&srv_conn);
+        print_playerlist_from_server(&srv_conn, pl_conf);
         break;
       case CONNECT:
+        connect_to_player(&srv_conn, p, pl_conf);
+        break;
       case QUIT:
         destroy_battle(&srv_conn, pl_conf);
         break;

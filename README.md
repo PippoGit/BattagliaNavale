@@ -2,8 +2,8 @@
 A simple net game developed in C using socket TCP/UDP
 
 # PROSSIME COSE DA FARE
+- Terminare fase di connect (parte UDP)
 - Gestire lo stream input del client con la select
-- Completare le funzionalità client-server (connect)
 - Iniziare fase di gioco UDP
 
 # TODO
