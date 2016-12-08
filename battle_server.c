@@ -163,6 +163,7 @@ void game_request(int a_socket, char *buffer)
     default:
       sprintf(buffer, "%d %d %s", PLAY, available, inet_ntoa(opponent_address.sin_addr));
       tcp_send(a_socket, buffer);
+
       return;
   }
 
