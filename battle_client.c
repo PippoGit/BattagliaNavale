@@ -21,7 +21,7 @@ void greetings()
   printf("!quit --> disconnette il client dal server\n");
 }
 
-int wait_for_cmd(const enum cmd_type t, char *param)
+int wait_for_cmd(const enum prg_state t, char *param)
 {
   int cmd = -1; //enum cmd {HELP, WHO, CONNECT, QUIT, SHOT, DISCONNECT, SHOW};
 
@@ -29,7 +29,6 @@ int wait_for_cmd(const enum cmd_type t, char *param)
 
   if(t == MENU)
   {
-    printf(">");
     scanf("%s", buffer);
 
     if(strncmp("!help", buffer, 5) == 0) cmd =  HELP;
@@ -43,7 +42,6 @@ int wait_for_cmd(const enum cmd_type t, char *param)
   }
   else
   {
-    printf("#");
     scanf("%s", buffer);
     if(strncmp("!help", buffer, 5) == 0) cmd =  HELP;
     else if(strncmp("!disconnect", buffer, 11) == 0) cmd =  DISCONNECT;
@@ -58,7 +56,7 @@ int wait_for_cmd(const enum cmd_type t, char *param)
   return cmd;
 }
 
-int wait_for_cmd_or_socket(const enum cmd_type t, char *param, srv_connection_t *c)
+int wait_for_cmd_or_socket(const enum prg_state t, char *param, srv_connection_t *c)
 {
   //nonvauncazz
   return wait_for_cmd(t, param);
@@ -157,10 +155,20 @@ void connect_to_player(srv_connection_t *c, char *player, player_t me)
   //se declina, pazienza return.
 }
 
+void print_prompt(enum prg_state s)
+{
+  switch(s)
+  {
+    case MENU: printf(">"); return;
+    case GAME: printf("#"); return;
+  }
+}
+
 int main(int argc, char* argv[])
 {
   srv_connection_t srv_conn;
   player_t pl_conf;
+  enum prg_state current_state = MENU;
 
   //check parameters
   if(argc < 3)
@@ -178,14 +186,18 @@ int main(int argc, char* argv[])
   //connect to the server
   connect_to_server(&srv_conn, pl_conf, argv[1], atoi(argv[2]));
 
-  //suppose to have established conn
+  //connection with server established
   while(1)
   {
     char p[MAX_USERNAME_LEN];
-    int a = wait_for_cmd_or_socket(MENU, p, &srv_conn);
+
+    print_prompt(current_state);
+    int a = wait_for_cmd_or_socket(current_state, p, &srv_conn);
 
     switch(a)
     {
+      case -1: //request from socket
+        break;
       case HELP:
         greetings();
         break;
