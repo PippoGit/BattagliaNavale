@@ -23,14 +23,14 @@ void greetings()
 
 int wait_for_cmd(const enum prg_state t, char *param)
 {
-  int cmd = -1; //enum cmd {HELP, WHO, CONNECT, QUIT, SHOT, DISCONNECT, SHOW};
-
+  int cmd = -1;
   char buffer[100];
+
+  //QUI E DOVE DEVO FARE UNA SELECT (PENSO)
+  scanf("%s", buffer);
 
   if(t == MENU)
   {
-    scanf("%s", buffer);
-
     if(strncmp("!help", buffer, 5) == 0) cmd =  HELP;
     else if(strncmp("!who", buffer, 4) == 0) cmd =  WHO;
     else if(strncmp("!connect", buffer, 8) == 0)
@@ -42,7 +42,6 @@ int wait_for_cmd(const enum prg_state t, char *param)
   }
   else
   {
-    scanf("%s", buffer);
     if(strncmp("!help", buffer, 5) == 0) cmd =  HELP;
     else if(strncmp("!disconnect", buffer, 11) == 0) cmd =  DISCONNECT;
     else if(strncmp("!shot", buffer, 5) == 0)
@@ -106,7 +105,7 @@ void print_playerlist_from_server(srv_connection_t* c, player_t me)
 
 void destroy_battle(srv_connection_t *c, player_t me)
 {
-  char buffer[10];
+  char buffer[50];
   sprintf(buffer, "%d %s", BYE, me.name_);
   tcp_send(c->srv_socket_, buffer);
 
@@ -196,8 +195,9 @@ int main(int argc, char* argv[])
 
     switch(a)
     {
-      case -1: //request from socket
+      case REQ_FROM_SOCKET: //request from socket
         break;
+
       case HELP:
         greetings();
         break;
