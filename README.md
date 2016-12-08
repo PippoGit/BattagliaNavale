@@ -1,7 +1,13 @@
 # BattagliaNavale
 A simple net game developed in C using socket TCP/UDP
 
+# PROSSIME COSE DA FARE
+- Gestire lo stream input del client con la select
+- Completare le funzionalità client-server (connect)
+
 # TODO
-- Mancano 3/4 di progetto...
+- Manca 3/4 di progetto...
 - Aggiustare la select. (RISOLTO)
-- Bug ABORT TRAP 6 (BOOOH)
+- Bug ABORT TRAP 6 a volte durante la !quit
+- Verificare se in fase di chiusura del client ci siano strutture dati da eliminare
+- Terminazione server (?)
