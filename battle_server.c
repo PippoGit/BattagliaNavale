@@ -127,7 +127,7 @@ void new_player_connected(int a_socket, char *msg)
 void send_player_list(int a_socket)
 {
   const player_list_element_t *node = list;
-  char buffer[50];
+  char buffer[DEFAULT_BUFF_SIZE];
 
   //send list size
   sprintf(buffer, "%d %d", LIST, list_size);
@@ -168,9 +168,9 @@ void game_request(int a_socket, char *buffer)
     default:
       sprintf(buffer, "%d %d %s", PLAY, available, inet_ntoa(opponent_address.sin_addr));
       tcp_send(a_socket, buffer);
-      printf("Sonoqui!\n");
+
       sprintf(buffer, "%d %s %s %d", PLAY, pl1, inet_ntoa(pl1_addr.sin_addr), pl1_port);
-      printf("DEBUG Invio a opponent: %s\n", buffer);
+      printf("DEBUG Invio a opponent: sok: %d  msg:%s\n", pl2_socket, buffer);
       tcp_send(pl2_socket, buffer);
       return;
   }
@@ -179,7 +179,7 @@ void game_request(int a_socket, char *buffer)
 
 void server_func(int *a_socket)
 {
-  char buffer[50], name[MAX_USERNAME_LEN];
+  char buffer[DEFAULT_BUFF_SIZE], name[MAX_USERNAME_LEN];
   int msg_type;
 
   //read cmd
@@ -206,6 +206,7 @@ void server_func(int *a_socket)
     case BYE:
       sscanf(buffer, "%d %s", &msg_type, name);
       remove_player(name);
+      printf("%s si e' disconnesso\n", name);
       *a_socket = -1;
       break;
 

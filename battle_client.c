@@ -12,56 +12,6 @@
 #include "h/net_util.h"
 #include "h/battle_util.h"
 
-void greetings()
-{
-  printf("Sono disponibili i seguenti comandi:\n");
-  printf("!help --> mostra l'elenco dei comandi disponibili\n");
-  printf("!who --> mostra l'elenco dei client connessi al server\n");
-  printf("!connect username --> avvia una partita con l'utente username\n");
-  printf("!quit --> disconnette il client dal server\n");
-}
-
-int wait_for_cmd(const enum prg_state t, char *param)
-{
-  int cmd = -1;
-  char buffer[100];
-
-  //QUI E DOVE DEVO FARE UNA SELECT (PENSO)
-  scanf("%s", buffer);
-
-  if(t == MENU)
-  {
-    if(strncmp("!help", buffer, 5) == 0) cmd =  HELP;
-    else if(strncmp("!who", buffer, 4) == 0) cmd =  WHO;
-    else if(strncmp("!connect", buffer, 8) == 0)
-    {
-      cmd =  CONNECT;
-      scanf("%s", param);
-    }
-    else if(strncmp("!quit", buffer, 5) == 0) cmd =  QUIT;
-  }
-  else
-  {
-    if(strncmp("!help", buffer, 5) == 0) cmd =  HELP;
-    else if(strncmp("!disconnect", buffer, 11) == 0) cmd =  DISCONNECT;
-    else if(strncmp("!shot", buffer, 5) == 0)
-    {
-      cmd =  SHOT;
-      scanf("%s", param);
-    }
-    else if(strncmp("!show", buffer, 5) == 0) cmd =  SHOW;
-  }
-
-  return cmd;
-}
-
-int wait_for_cmd_or_socket(const enum prg_state t, char *param, srv_connection_t *c)
-{
-  //nonvauncazz
-  return wait_for_cmd(t, param);
-}
-
-
 void init_player_one(player_t *p1)
 {
   printf("Inserisci il tuo username:");
@@ -72,7 +22,7 @@ void init_player_one(player_t *p1)
 
 void connect_to_server(srv_connection_t* c, const player_t pl, const char* ip, const int p)
 {
-  char buff[MAX_USERNAME_LEN+8];
+  char buff[DEFAULT_BUFF_SIZE];
 
   c->srv_socket_ = tcp_socket();
   printf("cerco di connettermi a %s:%d\n", ip, p);
@@ -84,7 +34,7 @@ void connect_to_server(srv_connection_t* c, const player_t pl, const char* ip, c
 
 void print_playerlist_from_server(srv_connection_t* c, player_t me)
 {
-  char buffer[1024], name[MAX_USERNAME_LEN];
+  char buffer[DEFAULT_BUFF_SIZE], name[MAX_USERNAME_LEN];
   int list_size=5, i, stat;
 
   sprintf(buffer, "%d", LIST);
@@ -105,7 +55,7 @@ void print_playerlist_from_server(srv_connection_t* c, player_t me)
 
 void destroy_battle(srv_connection_t *c, player_t me)
 {
-  char buffer[50];
+  char buffer[DEFAULT_BUFF_SIZE];
   sprintf(buffer, "%d %s", BYE, me.name_);
   tcp_send(c->srv_socket_, buffer);
 
@@ -115,7 +65,7 @@ void destroy_battle(srv_connection_t *c, player_t me)
 
 void connect_to_player(srv_connection_t *c, char *player, player_t me)
 {
-  char buffer[50];
+  char buffer[DEFAULT_BUFF_SIZE];
   int msgt = -1, errort = -1;
 
   if(strncmp(me.name_, player, MAX_USERNAME_LEN) == 0) //you can't play with yourself, duh
@@ -154,6 +104,36 @@ void connect_to_player(srv_connection_t *c, char *player, player_t me)
   //se declina, pazienza return.
 }
 
+void request_from_player(char *msg)
+{
+  char name[MAX_USERNAME_LEN], pl2_ip[15], resp;
+  unsigned short pl2_port = 0;
+  int msgt;
+
+  sscanf(msg, "%d %s %s %hd", &msgt, name, pl2_ip, &pl2_port);
+  printf("%s vuole sfidarti. Accetti la sfida? (y/n) ", name);
+  scanf("%c", &resp);
+
+  switch(resp)
+  {
+    case 'n':
+      return;
+    case 'y':
+      printf("Apro socket UDP con %s su indirizzo %s:%d\n", name, pl2_ip, pl2_port);
+      return;
+  }
+
+}
+
+void greetings()
+{
+  printf("Sono disponibili i seguenti comandi:\n");
+  printf("!help --> mostra l'elenco dei comandi disponibili\n");
+  printf("!who --> mostra l'elenco dei client connessi al server\n");
+  printf("!connect username --> avvia una partita con l'utente username\n");
+  printf("!quit --> disconnette il client dal server\n");
+}
+
 void print_prompt(enum prg_state s)
 {
   switch(s)
@@ -161,6 +141,106 @@ void print_prompt(enum prg_state s)
     case MENU: printf(">"); return;
     case GAME: printf("#"); return;
   }
+}
+
+
+void handle_cmd(int cmd, const enum prg_state t, char *param, srv_connection_t *srv_conn, const player_t pl_conf)
+{
+  switch(cmd)
+  {
+    case REQ_FROM_SOCKET: //request from socket
+      request_from_player(param);
+      break;
+
+    case HELP:
+      greetings();
+      break;
+    case WHO:
+      print_playerlist_from_server(srv_conn, pl_conf);
+      break;
+    case CONNECT:
+      connect_to_player(srv_conn, param, pl_conf);
+      break;
+    case QUIT:
+      destroy_battle(srv_conn, pl_conf);
+      break;
+    default:
+      printf("Comando non riconosciuto...\n");
+  }
+}
+
+int wait_for_cmd(const enum prg_state t, char *param)
+{
+  int cmd = -1;
+  char buffer[DEFAULT_BUFF_SIZE];
+
+  scanf("%s", buffer);
+
+  if(t == MENU)
+  {
+    if(strncmp("!help", buffer, 5) == 0) cmd =  HELP;
+    else if(strncmp("!who", buffer, 4) == 0) cmd =  WHO;
+    else if(strncmp("!connect", buffer, 8) == 0)
+    {
+      cmd =  CONNECT;
+      scanf("%s", param);
+    }
+    else if(strncmp("!quit", buffer, 5) == 0) cmd =  QUIT;
+  }
+  else
+  {
+    if(strncmp("!help", buffer, 5) == 0) cmd =  HELP;
+    else if(strncmp("!disconnect", buffer, 11) == 0) cmd =  DISCONNECT;
+    else if(strncmp("!shot", buffer, 5) == 0)
+    {
+      cmd =  SHOT;
+      scanf("%s", param);
+    }
+    else if(strncmp("!show", buffer, 5) == 0) cmd =  SHOW;
+  }
+
+  return cmd;
+}
+
+int wait_for_cmd_or_socket(const enum prg_state t, srv_connection_t *c, const player_t me)
+{
+  char param[DEFAULT_BUFF_SIZE];
+  fd_set master;
+  fd_set read_fds;
+  int fdmax, i, cmd;
+
+  FD_SET(0, &master);
+  FD_SET(c->srv_socket_, &master);
+
+  fdmax = c->srv_socket_;
+
+  while(1)
+  {
+
+    read_fds = master;
+    select(fdmax + 1, &read_fds, NULL, NULL, NULL);
+
+    for(i=0; i<=fdmax; i++)
+    {
+      if(FD_ISSET(i, &read_fds))
+      {
+        if(i == 0)
+        {
+          print_prompt(t);
+          cmd = wait_for_cmd(t, param);
+          handle_cmd(cmd, t, param, c, me);
+        }
+        else
+        {
+          //data from socket
+          tcp_recv(i, param);
+          handle_cmd(REQ_FROM_SOCKET, t, param, c, me);
+        }
+      }
+    }
+  }
+
+  return 0;
 }
 
 int main(int argc, char* argv[])
@@ -186,33 +266,5 @@ int main(int argc, char* argv[])
   connect_to_server(&srv_conn, pl_conf, argv[1], atoi(argv[2]));
 
   //connection with server established
-  while(1)
-  {
-    char p[MAX_USERNAME_LEN];
-
-    print_prompt(current_state);
-    int a = wait_for_cmd_or_socket(current_state, p, &srv_conn);
-
-    switch(a)
-    {
-      case REQ_FROM_SOCKET: //request from socket
-        break;
-
-      case HELP:
-        greetings();
-        break;
-      case WHO:
-        print_playerlist_from_server(&srv_conn, pl_conf);
-        break;
-      case CONNECT:
-        connect_to_player(&srv_conn, p, pl_conf);
-        break;
-      case QUIT:
-        destroy_battle(&srv_conn, pl_conf);
-        break;
-      default:
-        printf("Comando non riconosciuto...\n");
-    }
-
-  }
+  wait_for_cmd_or_socket(current_state, &srv_conn, pl_conf);
 }
