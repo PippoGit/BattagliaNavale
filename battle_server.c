@@ -42,7 +42,7 @@ void remove_player(const char* name)
   }
 }
 
-int search_player(const char* name, addr_t *addr, int *socket)
+int search_player(const char* name, addr_t *addr, int *socket, int *port)
 {
   player_list_element_t *node = list;
   while(node != NULL)
@@ -51,7 +51,8 @@ int search_player(const char* name, addr_t *addr, int *socket)
     {
       *addr = node->pl.address_;
       *socket = node->pl.socket_;
-      return (node->pl.status_ == FREE)?node->pl.udp_port_:-2;
+      *port = node->pl.udp_port_;
+      return (node->pl.status_ == FREE)?0:-2;
     }
     node = node->next;
   }
@@ -143,15 +144,15 @@ void send_player_list(int a_socket)
 
 void game_request(int a_socket, char *buffer)
 {
-  int available, msgt, pl1_port, pl2_socket, pl1_socket;
+  int available, msgt, pl1_port, pl2_port, pl2_socket, pl1_socket;
   char pl2[MAX_USERNAME_LEN], pl1[MAX_USERNAME_LEN];
   addr_t opponent_address, pl1_addr;
 
   sscanf(buffer, "%d %s %s", &msgt, pl1, pl2);
 
   //look for asked player
-  available = search_player(pl2, &opponent_address, &pl2_socket);
-  pl1_port = search_player(pl1, &pl1_addr, &pl1_socket);
+  available = search_player(pl2, &opponent_address, &pl2_socket, &pl2_port);
+  search_player(pl1, &pl1_addr, &pl1_socket, &pl1_port);
 
   switch(available)
   {

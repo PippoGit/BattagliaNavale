@@ -106,14 +106,21 @@ void connect_to_player(srv_connection_t *c, char *player, player_t me)
 
 void request_from_player(char *msg)
 {
-  char name[MAX_USERNAME_LEN], pl2_ip[15], resp, buff[DEFAULT_BUFF_SIZE];
+  char name[MAX_USERNAME_LEN], pl2_ip[15], resp;
+  char *line = (char *)malloc(DEFAULT_BUFF_SIZE * sizeof(char));;
   unsigned short pl2_port = 0;
   int msgt;
+  size_t buffsize = DEFAULT_BUFF_SIZE;
 
   sscanf(msg, "%d %s %s %hd", &msgt, name, pl2_ip, &pl2_port);
+  fflush(stdout);
   printf("%s vuole sfidarti. Accetti la sfida? (y/n) ", name);
-  select_and_get_line(buff);
-  sscanf(buff, "%c", &resp);
+
+  //getline(&line, &buffsize, 0);
+  //sscanf(line, "%c", &resp);
+  free(line);
+
+  resp = 'y';
 
   switch(resp)
   {
@@ -230,7 +237,7 @@ int wait_for_cmd_or_socket(const enum prg_state t, srv_connection_t *c, const pl
           cmd = wait_for_cmd(t, param);
           handle_cmd(cmd, t, param, c, me);
         }
-        else
+        else if(i==c->srv_socket_)
         {
           //data from socket
           tcp_recv(i, param);
