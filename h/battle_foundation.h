@@ -5,7 +5,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+
+#include <sys/time.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <stdio.h>
+
 
 enum connection_status {PENDING, CONN_ESTABLISHED, TIMEOUT};
 enum map_tile {WATER, SHIP};

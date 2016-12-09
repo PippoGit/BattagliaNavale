@@ -106,13 +106,14 @@ void connect_to_player(srv_connection_t *c, char *player, player_t me)
 
 void request_from_player(char *msg)
 {
-  char name[MAX_USERNAME_LEN], pl2_ip[15], resp;
+  char name[MAX_USERNAME_LEN], pl2_ip[15], resp, buff[DEFAULT_BUFF_SIZE];
   unsigned short pl2_port = 0;
   int msgt;
 
   sscanf(msg, "%d %s %s %hd", &msgt, name, pl2_ip, &pl2_port);
   printf("%s vuole sfidarti. Accetti la sfida? (y/n) ", name);
-  scanf("%c", &resp);
+  select_and_get_line(buff);
+  sscanf(buff, "%c", &resp);
 
   switch(resp)
   {
@@ -216,7 +217,6 @@ int wait_for_cmd_or_socket(const enum prg_state t, srv_connection_t *c, const pl
 
   while(1)
   {
-
     read_fds = master;
     select(fdmax + 1, &read_fds, NULL, NULL, NULL);
 
