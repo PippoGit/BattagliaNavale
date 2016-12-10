@@ -15,12 +15,25 @@
 #include <stdlib.h>
 
 enum connection_status {PENDING, CONN_ESTABLISHED, TIMEOUT};
-enum map_tile {WATER, SHIP};
+enum map_tile {WATER, SHIP, HIT_SHIP};
 enum player_status {FREE, OCCUPIED};
 enum cmd {HELP, WHO, CONNECT, QUIT, GHELP, SHOT, DISCONNECT, SHOW, REQ_FROM_SOCKET};
 enum msg_type {HELLO, LIST, PLAY, ATT, SURRENDER, BYE, ERROR, SET_OCCUPIED, SET_FREE, REQ_DECLINED, REQ_ACCEPTED};
 enum error_type {PLAY_WITH_YOURSELF, PLAYER_OCCUPIED, PLAYER_NOT_EXISTS, PLAYER_ALREADY_REGISTERED};
 enum prg_state {MENU, GAME};
+
+/*
+show map:
+
+  0 # 2
+  S S #
+  6 7 #
+
+tile#: WATER
+S: SHIP
+#: HIT_SHIP
+
+*/
 
 typedef struct sockaddr_in addr_t;
 
@@ -30,20 +43,21 @@ typedef struct player
   int udp_port_;
 
   addr_t address_;
+
+  //Server side information (not significant in battle_client.c)
   int socket_;
   enum player_status status_;
 } player_t;
 
-typedef struct pvp_connection {
-  int pvp_socket_;
-
-  addr_t opponent_address_;
-  enum player_status pl_stat_;
-} pvp_connection_t;
-
 typedef struct game {
-  pvp_connection_t opponent_;
-  enum connection_status conn_stat_;
+  int pvp_socket_;
+  player_t pl2_;
+  //enum connection_status conn_stat_;
+
+  enum map_tile pl1_map[MAP_SIZE*MAP_SIZE];
+  enum map_tile pl2_map[MAP_SIZE*MAP_SIZE];
+  int pl1_history[MAP_SIZE*MAP_SIZE]; //index: #attempt, value:-1 not done, 0 missed, 1 hit
+  int pl2_history[MAP_SIZE*MAP_SIZE]; //index: #attempt, value:-1 not done, 0 missed, 1 hit
 } game_t;
 
 typedef struct srv_connection {
