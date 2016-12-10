@@ -135,12 +135,12 @@ void request_from_player(char *msg)
     case 'n':
     case 'N':
       printf("\nRichiesta rifiutata.\n");
-      sprintf(buffer, "%d %s", REQ_DECLINED, pl_conf.name_);
+      sprintf(buffer, "%d %s", REQ_DECLINED, name);
       tcp_send(srv_conn.srv_socket_, buffer);
 
     case 'y':
     case 'Y':
-      sprintf(buffer, "%d %s", REQ_ACCEPTED, pl_conf.name_);
+      sprintf(buffer, "%d %s", REQ_ACCEPTED, name);
       tcp_send(srv_conn.srv_socket_, buffer);
 
       printf("\nRicheista accettata...\n");

@@ -184,33 +184,37 @@ void game_request(int a_socket, char *buffer)
 
       sprintf(buffer, "%d %s %s %d", PLAY, pl1, inet_ntoa(pl1_addr.sin_addr), pl1_port);
       tcp_send(pl2_socket, buffer);
-
-      //response from pl2
-      tcp_recv(pl2_socket, buffer);
-      sscanf(buffer, "%d %*s", &msgt);
-
-      if(msgt == REQ_DECLINED)
-      {
-        //request declined
-        printf("%s ha rifiutato\n", pl2);
-        set_player_free(pl1);
-
-        sprintf(buffer, "%d 0", PLAY);
-        tcp_send(a_socket, buffer);
-      }
-      else
-      {
-        //request accepted
-        printf("%s ha accettato\n", pl2);
-        set_player_occupied(pl2);
-
-        sprintf(buffer, "%d 1", PLAY);
-        tcp_send(a_socket, buffer);
-      }
       return;
   }
 
 }
+
+void player_denied_request(int asocket, char *msg)
+{
+  char pl1[MAX_USERNAME_LEN], pl2[MAX_USERNAME_LEN], buffer[DEFAULT_BUFF_SIZE];
+
+  sscanf(msg, "%*d %s %s", pl1, pl2);
+
+  printf("%s ha rifiutato\n", pl2);
+  set_player_free(pl1);
+
+  sprintf(buffer, "%d 0", PLAY);
+  tcp_send(get_node(pl1)->pl.socket_, buffer);
+}
+
+void player_accepted_request(int asocket, char *msg)
+{
+  char pl1[MAX_USERNAME_LEN], pl2[MAX_USERNAME_LEN], buffer[DEFAULT_BUFF_SIZE];
+
+  sscanf(msg, "%*d %s %s", pl1, pl2);
+
+  printf("%s ha accettato\n", pl2);
+  set_player_occupied(pl2);
+
+  sprintf(buffer, "%d 1", PLAY);
+  tcp_send(get_node(pl1)->pl.socket_, buffer);
+}
+
 
 void server_func(int *a_socket)
 {
@@ -245,6 +249,13 @@ void server_func(int *a_socket)
       *a_socket = -1;
       break;
 
+    case REQ_DECLINED:
+      player_denied_request(*a_socket, buffer);
+      break;
+      
+    case REQ_ACCEPTED:
+      player_accepted_request(*a_socket, buffer);
+      break;
     /*
     case SET_OCCUPIED:
       sscanf(buffer, "%d %s", &msg_type, name);

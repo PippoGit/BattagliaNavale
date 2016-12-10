@@ -9,11 +9,11 @@ A simple net game developed in C using socket TCP/UDP
 - Verificare se in fase di chiusura del client ci siano strutture dati da eliminare
 - Terminazione server (?)
 - verificare i parametri (ip porta)
-- Il Server muore sulla richiesta pending di sfida... (non proprio ok)
 
 - GESTIONE TIME OUT SU TUTTO
 - RIVEDERE TUTTE LE RECV
 - GESTIRE DISCONNESSIONE IMPROVVISA utente
+- GESTIRE DISCONNESSIONE IMPROVVISA SERVER (?)
 
 # Cose che penso di aver fatto
 - Server (salvo TIMEOUT e gestione client che muore)
