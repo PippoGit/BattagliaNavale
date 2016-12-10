@@ -1,14 +1,21 @@
 # BattagliaNavale
 A simple net game developed in C using socket TCP/UDP
 
-# PROSSIME COSE DA FARE
-- Select CLIENT non va un cazzo CASINO.
+# Prossime cose da fare
 - Terminare fase di connect (parte UDP)
 - Iniziare fase di gioco UDP
 
 # TODO
-- Manca 3/4 di progetto...
-- Aggiustare la select. (RISOLTO)
-- Bug ABORT TRAP 6 a volte durante la !quit
 - Verificare se in fase di chiusura del client ci siano strutture dati da eliminare
 - Terminazione server (?)
+- verificare i parametri (ip porta)
+
+- GESTIONE TIME OUT SU TUTTO
+- RIVEDERE TUTTE LE RECV
+- GESTIRE DISCONNESSIONE IMPROVVISA utente
+
+# Cose che penso di aver fatto
+- Interazione Client-Server (TCP)
+- Gestione stream IO/Socket (senza polling)
+- Gestione comandi su ambiente MENU/GAME
+- Casino

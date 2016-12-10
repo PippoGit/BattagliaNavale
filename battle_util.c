@@ -9,16 +9,64 @@ const char* playerstatus_desc(enum player_status stat)
   }
 }
 
-int select_and_get_line(char *buffer)
+void init_fdset(fd_set *set)
 {
-  fd_set master;
-  fd_set read_fds;
-  unsigned long size = DEFAULT_BUFF_SIZE;
+  FD_ZERO(set);
+}
 
-  FD_SET(0, &master);
-  read_fds = master;
+void set_fdset(fd_set *set, int desc)
+{
+  FD_SET(desc, set);
+}
 
-  int c = select(1, &read_fds, NULL, NULL, NULL);
-  if(c<0) return c;
-  return getline(&buffer, &size, 0);
+int select_fdset(fd_set *set, int set_size)
+{
+  int result = select(set_size+1, set, NULL, NULL, NULL);
+  if(result < 0)
+    perror("Error during file descriptor select");
+  return result;
+}
+
+int is_set(fd_set *set, int desc)
+{
+  return FD_ISSET(desc, set);
+}
+
+int scan_input(char** buffer) {
+  int result;
+  size_t size = 0;
+
+	*buffer = NULL;
+  result = getline(buffer, &size, stdin);
+
+	if(result < 0) {
+  	return 0;
+  }
+
+	remove_newline(*buffer);
+  return 1;
+}
+
+int remove_newline(char* buffer) {
+    char *pos;
+    if ((pos = strchr(buffer, '\n')) != NULL)
+        *pos = '\0';
+    else
+        return 0;
+    return 1;
+}
+
+/*
+int scan_input_poll(char** buffer, int sec) {
+    struct pollfd mypoll = { 0, POLLIN|POLLPRI };
+
+    if(poll(&mypoll, 1, sec*1000) )
+        return scan_input(buffer);
+    return 0;
+}
+*/
+
+void flush_input() {
+    int n;
+    while ((n = getchar()) != '\n' && n != EOF);
 }

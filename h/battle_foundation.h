@@ -10,14 +10,16 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <string.h>
 
+#include <stdlib.h>
 
 enum connection_status {PENDING, CONN_ESTABLISHED, TIMEOUT};
 enum map_tile {WATER, SHIP};
 enum player_status {FREE, OCCUPIED};
 enum cmd {HELP, WHO, CONNECT, QUIT, GHELP, SHOT, DISCONNECT, SHOW, REQ_FROM_SOCKET};
-enum msg_type {HELLO, LIST, PLAY, ATT, SURRENDER, BYE, ERROR, SET_OCCUPIED, SET_FREE};
-enum error_type {PLAY_WITH_YOURSELF, PLAYER_OCCUPIED, PLAYER_NOT_EXISTS};
+enum msg_type {HELLO, LIST, PLAY, ATT, SURRENDER, BYE, ERROR, SET_OCCUPIED, SET_FREE, REQ_DECLINED, REQ_ACCEPTED};
+enum error_type {PLAY_WITH_YOURSELF, PLAYER_OCCUPIED, PLAYER_NOT_EXISTS, PLAYER_ALREADY_REGISTERED};
 enum prg_state {MENU, GAME};
 
 typedef struct sockaddr_in addr_t;
