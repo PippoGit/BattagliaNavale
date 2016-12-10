@@ -135,15 +135,16 @@ void request_from_player(char *msg)
     case 'n':
     case 'N':
       printf("\nRichiesta rifiutata.\n");
-      sprintf(buffer, "%d %s", REQ_DECLINED, name);
+      sprintf(buffer, "%d %s %s", REQ_DECLINED, pl_conf.name_, name);
       tcp_send(srv_conn.srv_socket_, buffer);
+      break;
 
     case 'y':
     case 'Y':
-      sprintf(buffer, "%d %s", REQ_ACCEPTED, name);
+      sprintf(buffer, "%d %s %s", REQ_ACCEPTED, pl_conf.name_, name);
       tcp_send(srv_conn.srv_socket_, buffer);
 
-      printf("\nRicheista accettata...\n");
+      printf("\nRichiesta accettata...\n");
       current_state = GAME;
   }
   free(line);
@@ -285,6 +286,26 @@ int wait_for_cmd_or_socket()
   return 0;
 }
 
+void game_mode()
+{
+  int cmd = -1;
+  int my_turn = 1;
+  char param[DEFAULT_BUFF_SIZE];
+
+  print_prompt();
+  fflush(stdout);
+
+  if(my_turn)
+  {
+    cmd = fetch_cmd(param);
+    handle_cmd(cmd, param);
+  }
+  else
+  {
+    printf("Aspetta il turno dell'avversario...\n");
+  }
+}
+
 int main(int argc, char* argv[])
 {
   current_state = MENU;
@@ -316,6 +337,43 @@ int main(int argc, char* argv[])
   //server connection established, let's do some stuff
   while(1)
   {
-    wait_for_cmd_or_socket();
+    if(current_state == MENU)
+      wait_for_cmd_or_socket();
+    else
+      game_mode();
   }
 }
+
+/*
+GAME
+
+pl1:
+  start_handshake();
+
+  if(CONN)
+  {
+    while(GAME)
+    {
+      move();
+      wait_for_opponent_update();
+      update();
+      wait_for_opponent_move();
+      update();
+    }
+  }
+
+pl2:
+  wait_for_handshake();
+
+  if(CONN)
+  {
+    while(GAME)
+    {
+      wait_for_opponent_move();
+      update();
+      move();
+      wait_for_opponent_update();
+      update();
+    }
+  }
+*/

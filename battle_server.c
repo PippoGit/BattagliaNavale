@@ -178,6 +178,7 @@ void game_request(int a_socket, char *buffer)
     default:
       //set player1 to OCCUPIED
       set_player_occupied(pl1);
+      set_player_occupied(pl2);
 
       sprintf(buffer, "%d %d %s", PLAY, available, inet_ntoa(opponent_address.sin_addr));
       tcp_send(a_socket, buffer);
@@ -197,7 +198,7 @@ void player_denied_request(int asocket, char *msg)
 
   printf("%s ha rifiutato\n", pl2);
   set_player_free(pl1);
-
+  set_player_free(pl2);
   sprintf(buffer, "%d 0", PLAY);
   tcp_send(get_node(pl1)->pl.socket_, buffer);
 }
@@ -206,10 +207,9 @@ void player_accepted_request(int asocket, char *msg)
 {
   char pl1[MAX_USERNAME_LEN], pl2[MAX_USERNAME_LEN], buffer[DEFAULT_BUFF_SIZE];
 
-  sscanf(msg, "%*d %s %s", pl1, pl2);
+  sscanf(msg, "%*d %s %s", pl2, pl1);
 
   printf("%s ha accettato\n", pl2);
-  set_player_occupied(pl2);
 
   sprintf(buffer, "%d 1", PLAY);
   tcp_send(get_node(pl1)->pl.socket_, buffer);
@@ -222,6 +222,7 @@ void server_func(int *a_socket)
   int msg_type;
 
   //read cmd
+  memset(buffer, 0, sizeof(buffer));
   tcp_recv(*a_socket, buffer);
   //printf("DEBUG: received cmd %s\n", buffer);
 
@@ -252,7 +253,7 @@ void server_func(int *a_socket)
     case REQ_DECLINED:
       player_denied_request(*a_socket, buffer);
       break;
-      
+
     case REQ_ACCEPTED:
       player_accepted_request(*a_socket, buffer);
       break;
