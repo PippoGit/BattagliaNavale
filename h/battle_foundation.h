@@ -18,7 +18,7 @@ enum connection_status {PENDING, CONN_ESTABLISHED, TIMEOUT};
 enum map_tile {WATER, SHIP, HIT_SHIP};
 enum player_status {FREE, OCCUPIED};
 enum cmd {HELP, WHO, CONNECT, QUIT, GHELP, SHOT, DISCONNECT, SHOW, REQ_FROM_SOCKET};
-enum msg_type {HELLO, LIST, PLAY, ATT, SURRENDER, BYE, ERROR, SET_OCCUPIED, SET_FREE, REQ_DECLINED, REQ_ACCEPTED};
+enum msg_type {HELLO, LIST, PLAY, ATK, SURRENDER, BYE, ERROR, SET_OCCUPIED, SET_FREE, REQ_DECLINED, REQ_ACCEPTED};
 enum error_type {PLAY_WITH_YOURSELF, PLAYER_OCCUPIED, PLAYER_NOT_EXISTS, PLAYER_ALREADY_REGISTERED};
 enum prg_state {MENU, GAME};
 
@@ -54,10 +54,11 @@ typedef struct game {
   player_t pl2_;
   //enum connection_status conn_stat_;
 
-  enum map_tile pl1_map[MAP_SIZE*MAP_SIZE];
-  enum map_tile pl2_map[MAP_SIZE*MAP_SIZE];
-  int pl1_history[MAP_SIZE*MAP_SIZE]; //index: #attempt, value:-1 not done, 0 missed, 1 hit
-  int pl2_history[MAP_SIZE*MAP_SIZE]; //index: #attempt, value:-1 not done, 0 missed, 1 hit
+  enum map_tile pl1_map_[MAP_SIZE*MAP_SIZE];
+  enum map_tile pl2_map_[MAP_SIZE*MAP_SIZE];
+  int pl1_history_[MAP_SIZE*MAP_SIZE]; //index: #attempt, value:-1 not done, 0 missed, 1 hit
+  int pl2_history_[MAP_SIZE*MAP_SIZE]; //index: #attempt, value:-1 not done, 0 missed, 1 hit
+  int my_turn_;
 } game_t;
 
 typedef struct srv_connection {

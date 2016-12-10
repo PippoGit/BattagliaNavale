@@ -22,6 +22,9 @@ int tcp_start_server(int socket, void (*func)(int*))
   fd_set read_fds;
   int new_sd, fdmax, i, j;
 
+  FD_ZERO(&master);
+  FD_ZERO(&read_fds);
+
   FD_SET(socket, &master);
   fdmax = socket;
 

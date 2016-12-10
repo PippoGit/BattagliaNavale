@@ -2,8 +2,8 @@
 A simple net game developed in C using socket TCP/UDP
 
 # Prossime cose da fare
-- Terminare fase di connect (parte UDP)
-- Iniziare fase di gioco UDP
+- Scrivere piccola lib. per l'udp (in particolare una send_to, recv_from, socket)
+- RIUSCIRE A GARANTIRE UNA PARTITA PVP (Senza controlli su timeout e senza preoccupazioni su whatsnext)
 
 # TODO
 - Verificare se in fase di chiusura del client ci siano strutture dati da eliminare
@@ -14,8 +14,10 @@ A simple net game developed in C using socket TCP/UDP
 - RIVEDERE TUTTE LE RECV
 - GESTIRE DISCONNESSIONE IMPROVVISA utente
 - GESTIRE DISCONNESSIONE IMPROVVISA SERVER (?)
+- (RISCRIVERE PARTE SELECT() USANDO LA MIA LIB???ANKENO)
 
 # Cose che penso di aver fatto
+- Inizializzazione della fase di gioco (solo in locale) (ovviamente va rivista e mancano i timeout ecc.)
 - Server (salvo TIMEOUT e gestione client che muore)
 - Interazione Client-Server (TCP)
 - Gestione stream IO/Socket (senza polling)

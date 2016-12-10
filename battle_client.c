@@ -7,6 +7,7 @@ srv_connection_t srv_conn;
 player_t pl_conf;
 fd_set fds;
 enum prg_state current_state;
+game_t current_game;
 
 void destroy_battle()
 {
@@ -70,10 +71,98 @@ void print_playerlist_from_server()
   }
 }
 
+void init_map(enum map_tile m[])
+{
+  int i=0;
+
+  for(i=0; i<MAP_SIZE*MAP_SIZE; i++)
+    m[i] = WATER;
+}
+
+void init_history(int h[])
+{
+  int i=0;
+
+  for(i=0; i<MAP_SIZE*MAP_SIZE; i++)
+    h[i] = -1;
+}
+
+void print_map(enum map_tile m[])
+{
+  enum map_tile curr;
+  int i=0, j=0;
+
+  for(i=0; i<MAP_SIZE; i++)
+  {
+    for(j=0; j<MAP_SIZE;j++)
+    {
+      curr = m[i*MAP_SIZE +j];
+      switch(curr)
+      {
+        case WATER:
+          printf("\t%d", i*MAP_SIZE + j);
+          break;
+
+        case SHIP:
+          printf("\tS");
+          break;
+
+        case HIT_SHIP:
+          printf("\t#");
+          break;
+      }
+    }
+    printf("\n");
+  }
+  printf("\n");
+}
+
+void init_game(char *name, char *ip, int udp_port)
+{
+  char *line = NULL;
+  int i=0, tile;
+  player_t pl2;
+  current_state = GAME;
+
+  strncpy(pl2.name_, name, MAX_USERNAME_LEN);
+  pl2.udp_port_ = udp_port;
+
+  memset(&pl2.address_, 0, sizeof(pl2.address_));
+  pl2.address_.sin_family = AF_INET;
+  pl2.address_.sin_port = htons(udp_port);
+  inet_pton(AF_INET, ip, &pl2.address_.sin_addr);
+
+  current_game.pl2_ = pl2;
+
+  init_map(current_game.pl1_map_);
+  init_map(current_game.pl2_map_);
+
+  init_history(current_game.pl1_history_);
+  init_history(current_game.pl2_history_);
+
+  printf("Posiziona %d caselle (un numero compreso tra 0 e %d)\n", MAX_SHIPS_NUM, (MAP_SIZE*MAP_SIZE)-1);
+
+  for(i=0; i<MAX_SHIPS_NUM; i++)
+  {
+    scan_input(&line);
+    sscanf(line, "%d",&tile);
+
+    if(tile < (MAP_SIZE*MAP_SIZE) && current_game.pl1_map_[tile] == WATER)
+      current_game.pl1_map_[tile] = SHIP;
+    else
+    {
+      printf("Casella non valida, riprova:");
+      i--;
+    }
+  }
+
+  printf("Mappa creata con successo!\n");
+}
+
 void connect_to_player(char *player)
 {
-  char buffer[DEFAULT_BUFF_SIZE];
-  int msgt = -1, errort = -1, response=0;
+  char buffer[DEFAULT_BUFF_SIZE], pl2_ip[15];
+  int msgt = -1, errort = -1, response=0, pl2_port;
 
   if(strncmp(pl_conf.name_, player, MAX_USERNAME_LEN) == 0) //you can't play with yourself, duh
   {
@@ -97,6 +186,7 @@ void connect_to_player(char *player)
 
     case PLAY:
       printf("Invio richiesta al giocatore...\n");
+      sscanf(buffer, "%*d %*s %s %d", pl2_ip, &pl2_port);
 
       //wait for response
       tcp_recv(srv_conn.srv_socket_, buffer);
@@ -106,7 +196,8 @@ void connect_to_player(char *player)
       {
         //request accepted
         printf("Richiesta accettata!\n");
-        current_state = GAME;
+        current_game.my_turn_ = 0; //invited player always do the first move
+        init_game(player, pl2_ip, pl2_port);
       }
       else
       {
@@ -145,7 +236,8 @@ void request_from_player(char *msg)
       tcp_send(srv_conn.srv_socket_, buffer);
 
       printf("\nRichiesta accettata...\n");
-      current_state = GAME;
+      current_game.my_turn_ = 1; //invited player always do the first move
+      init_game(name, pl2_ip, pl2_port);
   }
   free(line);
 }
@@ -206,7 +298,8 @@ void handle_cmd(int cmd, char *param)
       print_man();
       break;
     case SHOW:
-      printf("mostro le mappe\n");
+      print_map(current_game.pl1_map_);
+      print_map(current_game.pl2_map_);
       break;
     case DISCONNECT:
       printf("ti sei arreso\n");
@@ -289,20 +382,20 @@ int wait_for_cmd_or_socket()
 void game_mode()
 {
   int cmd = -1;
-  int my_turn = 1;
-  char param[DEFAULT_BUFF_SIZE];
+  char param[DEFAULT_BUFF_SIZE], *wait;
 
-  print_prompt();
-  fflush(stdout);
-
-  if(my_turn)
+  if(current_game.my_turn_)
   {
+    print_prompt();
+    fflush(stdout);
+
     cmd = fetch_cmd(param);
     handle_cmd(cmd, param);
   }
   else
   {
     printf("Aspetta il turno dell'avversario...\n");
+    scan_input(&wait);
   }
 }
 

@@ -176,11 +176,11 @@ void game_request(int a_socket, char *buffer)
       return;
 
     default:
-      //set player1 to OCCUPIED
+      //set player1 and player2 to OCCUPIED
       set_player_occupied(pl1);
       set_player_occupied(pl2);
 
-      sprintf(buffer, "%d %d %s", PLAY, available, inet_ntoa(opponent_address.sin_addr));
+      sprintf(buffer, "%d %s %s %d", PLAY, pl2, inet_ntoa(opponent_address.sin_addr), pl2_port);
       tcp_send(a_socket, buffer);
 
       sprintf(buffer, "%d %s %s %d", PLAY, pl1, inet_ntoa(pl1_addr.sin_addr), pl1_port);
@@ -257,17 +257,18 @@ void server_func(int *a_socket)
     case REQ_ACCEPTED:
       player_accepted_request(*a_socket, buffer);
       break;
-    /*
+
     case SET_OCCUPIED:
       sscanf(buffer, "%d %s", &msg_type, name);
+      printf("%s ha richiesto di essere settato come occupato\n", name);
       set_player_occupied(name);
       break;
 
     case SET_FREE:
       sscanf(buffer, "%d %s", &msg_type, name);
+      printf("%s ha richiesto di essere settato come libero\n", name);
       set_player_free(name);
       break;
-    */
     default:
       printf("Messaggio sconosciuto... :(\n");
   }
