@@ -119,13 +119,16 @@ int valid_position(enum map_tile m[], int p)
   return (p < (MAP_SIZE*MAP_SIZE) && p >= 0 && m[p] == WATER);
 }
 
-void init_game(char *name, char *ip, int udp_port)
+void init_game(char *name, char *ip, int udp_port, int turn)
 {
   char *line = NULL;
   int i=0, tile;
   player_t pl2;
   current_state = GAME;
 
+  memset(&current_game, 0, sizeof(current_game)); //init current GAME
+
+  current_game.my_turn_ = turn;
   strncpy(pl2.name_, name, MAX_USERNAME_LEN);
   pl2.udp_port_ = udp_port;
 
@@ -192,8 +195,8 @@ void connect_to_player(char *player)
       {
         //request accepted
         printf("Richiesta accettata!\n");
-        current_game.my_turn_ = 0; //invited player always do the first move
-        init_game(player, pl2_ip, pl2_port);
+        //invited player always do the first move
+        init_game(player, pl2_ip, pl2_port, 0);
       }
       else
       {
@@ -232,8 +235,8 @@ void request_from_player(char *msg)
       tcp_send(srv_conn.srv_socket_, buffer);
 
       printf("\nRichiesta accettata...\n");
-      current_game.my_turn_ = 1; //invited player always do the first move
-      init_game(name, pl2_ip, pl2_port);
+      //invited player always do the first move
+      init_game(name, pl2_ip, pl2_port, 1);
   }
   free(line);
 }
@@ -407,6 +410,8 @@ void handle_cmd(int cmd, char *param)
       char buffer[DEFAULT_BUFF_SIZE];
       sprintf(buffer, "%d", I_LOST);
       udp_send(current_game.pvp_socket_, buffer);
+
+      close(current_game.pvp_socket_);
 
       //Server, i am free again!
       sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
