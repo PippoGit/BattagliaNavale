@@ -15,25 +15,12 @@
 #include <stdlib.h>
 
 enum connection_status {PENDING, CONN_ESTABLISHED, TIMEOUT};
-enum map_tile {WATER, SHIP, HIT_SHIP};
+enum map_tile {WATER, SHIP, HIT_SHIP, MISSED_SHIP};
 enum player_status {FREE, OCCUPIED};
 enum cmd {HELP, WHO, CONNECT, QUIT, GHELP, SHOT, DISCONNECT, SHOW, REQ_FROM_SOCKET};
-enum msg_type {HELLO, LIST, PLAY, ATK, SURRENDER, BYE, ERROR, SET_OCCUPIED, SET_FREE, REQ_DECLINED, REQ_ACCEPTED};
+enum msg_type {HELLO, LIST, PLAY, ATK, HIT, MISS, SURRENDER, BYE, ERROR, SET_OCCUPIED, SET_FREE, REQ_DECLINED, REQ_ACCEPTED};
 enum error_type {PLAY_WITH_YOURSELF, PLAYER_OCCUPIED, PLAYER_NOT_EXISTS, PLAYER_ALREADY_REGISTERED};
 enum prg_state {MENU, GAME};
-
-/*
-show map:
-
-  0 # 2
-  S S #
-  6 7 #
-
-tile#: WATER
-S: SHIP
-#: HIT_SHIP
-
-*/
 
 typedef struct sockaddr_in addr_t;
 

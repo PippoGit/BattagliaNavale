@@ -6,5 +6,6 @@
 #define MAX_USERNAME_LEN 15
 #define TCP_SERVER_LISTENQ 10
 #define DEFAULT_BUFF_SIZE 50
+#define INPUT_TIMEOUT_SEC 60
 
 #endif

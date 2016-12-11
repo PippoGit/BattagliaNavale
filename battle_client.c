@@ -16,6 +16,7 @@ void destroy_battle()
   tcp_send(srv_conn.srv_socket_, buffer);
 
   //destroy data structure
+  close(srv_conn.srv_socket_);
   exit(0);
 }
 
@@ -79,14 +80,6 @@ void init_map(enum map_tile m[])
     m[i] = WATER;
 }
 
-void init_history(int h[])
-{
-  int i=0;
-
-  for(i=0; i<MAP_SIZE*MAP_SIZE; i++)
-    h[i] = -1;
-}
-
 void print_map(enum map_tile m[])
 {
   enum map_tile curr;
@@ -110,11 +103,20 @@ void print_map(enum map_tile m[])
         case HIT_SHIP:
           printf("\t#");
           break;
+
+        case MISSED_SHIP:
+          printf("\tM");
+          break;
       }
     }
     printf("\n");
   }
   printf("\n");
+}
+
+int valid_position(enum map_tile m[], int p)
+{
+  return (p < (MAP_SIZE*MAP_SIZE) && p >= 0 && m[p] == WATER);
 }
 
 void init_game(char *name, char *ip, int udp_port)
@@ -127,18 +129,11 @@ void init_game(char *name, char *ip, int udp_port)
   strncpy(pl2.name_, name, MAX_USERNAME_LEN);
   pl2.udp_port_ = udp_port;
 
-  memset(&pl2.address_, 0, sizeof(pl2.address_));
-  pl2.address_.sin_family = AF_INET;
-  pl2.address_.sin_port = htons(udp_port);
-  inet_pton(AF_INET, ip, &pl2.address_.sin_addr);
-
+  current_game.pvp_socket_ = udp_connect(&pl2.address_, ip, pl2.udp_port_, pl_conf.udp_port_);
   current_game.pl2_ = pl2;
 
   init_map(current_game.pl1_map_);
   init_map(current_game.pl2_map_);
-
-  init_history(current_game.pl1_history_);
-  init_history(current_game.pl2_history_);
 
   printf("Posiziona %d caselle (un numero compreso tra 0 e %d)\n", MAX_SHIPS_NUM, (MAP_SIZE*MAP_SIZE)-1);
 
@@ -147,7 +142,7 @@ void init_game(char *name, char *ip, int udp_port)
     scan_input(&line);
     sscanf(line, "%d",&tile);
 
-    if(tile < (MAP_SIZE*MAP_SIZE) && current_game.pl1_map_[tile] == WATER)
+    if(valid_position(current_game.pl1_map_, tile))
       current_game.pl1_map_[tile] = SHIP;
     else
     {
@@ -157,6 +152,7 @@ void init_game(char *name, char *ip, int udp_port)
   }
 
   printf("Mappa creata con successo!\n");
+  free(line);
 }
 
 void connect_to_player(char *player)
@@ -260,7 +256,6 @@ void print_prompt()
   }
 }
 
-//game functions
 void print_man()
 {
   printf("Sono disponibili i seguenti comandi:\n");
@@ -268,6 +263,64 @@ void print_man()
   printf("!shot square --> fai un tentativo con la casella square\n");
   printf("!show --> visualizza griglia di gioco\n");
   printf("!disconnect --> disconnette il client dall'attuale partita\n");
+}
+
+void shot(int position)
+{
+  int response = -1;
+  char buffer[DEFAULT_BUFF_SIZE];
+  if(!valid_position(current_game.pl2_map_, position))
+  {
+    printf("Posizione non valida. Inserisci un comando valido.\n");
+    return;
+  }
+
+  //send attack
+  sprintf(buffer, "%d %d", ATK, position);
+  udp_send(current_game.pvp_socket_, buffer);
+
+  //wait for response
+  udp_recv(current_game.pvp_socket_, buffer);
+  sscanf(buffer, "%d", &response);
+
+  if(response == MISS)
+  {
+    sprintf(buffer, "%d", MISS);
+    current_game.pl2_map_[position] = MISSED_SHIP;
+    printf("%s dice: mancato :(\n", current_game.pl2_.name_);
+  }
+  else
+  {
+    sprintf(buffer, "%d", HIT);
+    current_game.pl2_map_[position] = HIT_SHIP;
+    printf("%s dice: colpito! :)\n", current_game.pl2_.name_);
+  }
+
+}
+
+void update_my_map(char *msg)
+{
+  char buffer[DEFAULT_BUFF_SIZE];
+  int msgt, position;
+
+  sscanf(msg, "%d %d", &msgt, &position);
+  if(msgt != ATK) return; //this should never happen
+
+  if(current_game.pl1_map_[position] == WATER)
+  {
+    sprintf(buffer, "%d", MISS);
+    current_game.pl1_map_[position] = MISSED_SHIP;
+    printf("%s spara in %d: mancato :)\n", current_game.pl2_.name_, position);
+  }
+  else
+  {
+    sprintf(buffer, "%d", HIT);
+    current_game.pl1_map_[position] = HIT_SHIP;
+    printf("%s spara in %d: colpito :()\n", current_game.pl2_.name_, position);
+  }
+
+  //send response
+  udp_send(current_game.pvp_socket_, buffer);
 }
 
 void handle_cmd(int cmd, char *param)
@@ -298,7 +351,9 @@ void handle_cmd(int cmd, char *param)
       print_man();
       break;
     case SHOW:
+      printf("La tua mappa:\n");
       print_map(current_game.pl1_map_);
+      printf("\n\nMappa del tuo avversario:\n");
       print_map(current_game.pl2_map_);
       break;
     case DISCONNECT:
@@ -307,10 +362,11 @@ void handle_cmd(int cmd, char *param)
       break;
     case SHOT:
       printf("hai sparato in posizione %s\n", param);
+      shot(atoi(param));
       break;
 
     default:
-      printf("Comando non riconosciuto...\n");
+      printf("Comando non riconosciuto o non valido...\n");
   }
 }
 
@@ -340,6 +396,8 @@ int fetch_cmd(char *param)
     {
       cmd =  SHOT;
       sscanf(buffer, "%*s %s", param);
+      if(!valid_position(current_game.pl2_map_, atoi(param)))
+        cmd = -1;
     }
     else if(strncmp("!show", buffer, 5) == 0) cmd =  SHOW;
   }
@@ -382,21 +440,26 @@ int wait_for_cmd_or_socket()
 void game_mode()
 {
   int cmd = -1;
-  char param[DEFAULT_BUFF_SIZE], *wait;
+  char param[DEFAULT_BUFF_SIZE], *wait = NULL, buffer[DEFAULT_BUFF_SIZE];
 
   if(current_game.my_turn_)
   {
-    print_prompt();
-    fflush(stdout);
-
-    cmd = fetch_cmd(param);
-    handle_cmd(cmd, param);
+    do {
+      print_prompt();
+      fflush(stdout);
+      cmd = fetch_cmd(param); //i should wait here
+      handle_cmd(cmd, param);
+    } while(cmd < 0 || cmd == SHOW);
   }
   else
   {
     printf("Aspetta il turno dell'avversario...\n");
-    scan_input(&wait);
+    udp_recv(current_game.pvp_socket_, buffer);
+    printf("DEBUG: ho ricevuto %s\n", buffer);
+    update_my_map(buffer);
   }
+  current_game.my_turn_ = !current_game.my_turn_;  //cambio il turno
+  free(wait);
 }
 
 int main(int argc, char* argv[])
@@ -436,37 +499,3 @@ int main(int argc, char* argv[])
       game_mode();
   }
 }
-
-/*
-GAME
-
-pl1:
-  start_handshake();
-
-  if(CONN)
-  {
-    while(GAME)
-    {
-      move();
-      wait_for_opponent_update();
-      update();
-      wait_for_opponent_move();
-      update();
-    }
-  }
-
-pl2:
-  wait_for_handshake();
-
-  if(CONN)
-  {
-    while(GAME)
-    {
-      wait_for_opponent_move();
-      update();
-      move();
-      wait_for_opponent_update();
-      update();
-    }
-  }
-*/

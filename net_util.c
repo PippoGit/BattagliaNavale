@@ -13,6 +13,56 @@ int tcp_socket()
   return s;
 }
 
+int udp_socket()
+{
+  int s = -1;
+
+  s = socket(AF_INET, SOCK_DGRAM, 0);
+  if(s < 0) {
+    perror("Error during socket()");
+    exit(-1);
+  }
+
+  return s;
+}
+
+int udp_connect(addr_t *a, char *ip, int udp_port, int my_port)
+{
+  int ret = -1, socket;
+  addr_t my_addr;
+
+  //create udp socket
+  socket = udp_socket();
+
+  //init my address
+  memset(&my_addr, 0, sizeof(my_addr));
+  my_addr.sin_family = AF_INET;
+  my_addr.sin_port = htons(my_port);
+  my_addr.sin_addr.s_addr = INADDR_ANY;
+
+  ret = bind(socket, (struct sockaddr *) &my_addr, sizeof(my_addr));
+  if(ret < 0)
+  {
+    perror("Error during UDP bind()");
+    exit(-1);
+  }
+
+  //init opponent address
+  memset(a, 0, sizeof(*a));
+  a->sin_family = AF_INET;
+  a->sin_port = htons(udp_port);
+  inet_pton(AF_INET, ip, &a->sin_addr);
+
+  ret = connect(socket, (struct sockaddr*)a, sizeof(*a));
+  if(ret < 0)
+  {
+    perror("Error during UDP connect()");
+    exit(-1);
+  }
+
+  return socket;
+}
+
 int tcp_start_server(int socket, void (*func)(int*))
 {
   addr_t cl_addr;
@@ -148,4 +198,14 @@ int tcp_send(int socket, const char *msg)
     //exit(-1);
   }
   return ret;
+}
+
+int udp_recv(int socket, char*msg)
+{
+  return tcp_recv(socket, msg);
+}
+
+int udp_send(int socket, const char*msg)
+{
+  return tcp_send(socket, msg);
 }

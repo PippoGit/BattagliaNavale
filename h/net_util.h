@@ -10,4 +10,9 @@ int tcp_recv(int socket, char* msg);
 int tcp_server(int port);
 int tcp_start_server(int socket, void (*func)(int*));
 
+int udp_connect(addr_t *a, char *ip, int udp_port, int my_port);
+int udp_socket();
+int udp_recv(int socket, char*msg);
+int udp_send(int socket, const char*msg);
+
 #endif

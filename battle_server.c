@@ -224,7 +224,8 @@ void server_func(int *a_socket)
   //read cmd
   memset(buffer, 0, sizeof(buffer));
   tcp_recv(*a_socket, buffer);
-  //printf("DEBUG: received cmd %s\n", buffer);
+
+  printf("DEBUG: received cmd %s\n", buffer);
 
   sscanf(buffer, "%d", &msg_type);
 
