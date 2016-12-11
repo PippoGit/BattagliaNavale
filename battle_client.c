@@ -265,6 +265,15 @@ void print_man()
   printf("!disconnect --> disconnette il client dall'attuale partita\n");
 }
 
+int have_i_lost()
+{
+  int i=0, ship_left=MAX_SHIPS_NUM;
+  for(i=0; i<MAP_SIZE*MAP_SIZE;i++)
+    if(current_game.pl1_map_[i] == HIT_SHIP)
+      ship_left--;
+  return ship_left==0;
+}
+
 void shot(int position)
 {
   int response = -1;
@@ -298,12 +307,31 @@ void shot(int position)
 
 }
 
+void you_win()
+{
+  char buffer[DEFAULT_BUFF_SIZE];
+  printf("La partita e' terminata. Hai vinto!\n\n");
+
+  //Server, i am free again!
+  sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
+  tcp_send(srv_conn.srv_socket_, buffer);
+
+  //shutdown pvp connection
+  close(current_game.pvp_socket_);
+
+  current_state = MENU;
+}
+
 void update_my_map(char *msg)
 {
   char buffer[DEFAULT_BUFF_SIZE];
   int msgt, position;
 
   sscanf(msg, "%d %d", &msgt, &position);
+
+  if(msgt == I_LOST || msgt == SURRENDER)
+    return you_win();
+
   if(msgt != ATK) return; //this should never happen
 
   if(current_game.pl1_map_[position] == WATER)
@@ -316,11 +344,27 @@ void update_my_map(char *msg)
   {
     sprintf(buffer, "%d", HIT);
     current_game.pl1_map_[position] = HIT_SHIP;
-    printf("%s spara in %d: colpito :()\n", current_game.pl2_.name_, position);
+    printf("%s spara in %d: colpito :(\n", current_game.pl2_.name_, position);
   }
 
   //send response
   udp_send(current_game.pvp_socket_, buffer);
+
+  if(have_i_lost()) {
+    printf("Le navi a tua disposizione sono finite. Hai perso.\n\n");
+    //send that i have lost and quit somehow
+    sprintf(buffer, "%d", I_LOST);
+    udp_send(current_game.pvp_socket_, buffer);
+
+    //shutdown pvp connection
+    close(current_game.pvp_socket_);
+
+    //Server, i am free again!
+    sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
+    tcp_send(srv_conn.srv_socket_, buffer);
+
+    current_state = MENU;
+  }
 }
 
 void handle_cmd(int cmd, char *param)
@@ -357,8 +401,18 @@ void handle_cmd(int cmd, char *param)
       print_map(current_game.pl2_map_);
       break;
     case DISCONNECT:
-      printf("ti sei arreso\n");
+      printf("ti sei arreso\n\n");
+
+      //////////////////////////////////////////////////// SOLUZIONE TEMPORANEA
+      char buffer[DEFAULT_BUFF_SIZE];
+      sprintf(buffer, "%d", I_LOST);
+      udp_send(current_game.pvp_socket_, buffer);
+
+      //Server, i am free again!
+      sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
+      tcp_send(srv_conn.srv_socket_, buffer);
       current_state = MENU;
+      //////////////////////////////////////////////////////
       break;
     case SHOT:
       printf("hai sparato in posizione %s\n", param);

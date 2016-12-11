@@ -194,7 +194,7 @@ void player_denied_request(int asocket, char *msg)
 {
   char pl1[MAX_USERNAME_LEN], pl2[MAX_USERNAME_LEN], buffer[DEFAULT_BUFF_SIZE];
 
-  sscanf(msg, "%*d %s %s", pl1, pl2);
+  sscanf(msg, "%*d %s %s", pl2, pl1);
 
   printf("%s ha rifiutato\n", pl2);
   set_player_free(pl1);
