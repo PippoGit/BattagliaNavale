@@ -3,9 +3,7 @@ A simple net game developed in C using socket TCP/UDP
 
 # Prossime cose da fare
 - Cominciare a pensare ad un modo per rendere solido il sistema (gestione input utente)
-- Gestire la !DISCONNECT (APPROPRIATAMENTE)
-- SE IL NOME NON E' UNA STRINGA CRASHA MALE TUTTO
-- BUG SE RIFIUTO UNA SFIDA (NONSOPERCHEPRIMAANDAVACHEPPALLE)
+- Cominciare a fare i timeout (socket udp e input in pvp)
 
 # TODO
 - Verificare se in fase di chiusura del client ci siano strutture dati da eliminare
@@ -20,6 +18,7 @@ A simple net game developed in C using socket TCP/UDP
 - (RISCRIVERE PARTE SERVER SELECT() USANDO LA MIA LIB???ANKENO)
 
 # Cose che penso di aver fatto
+- disconnect udp funziona (forse non è la cosa più del mondo ma va)
 - Ora è possibile fare una partita con un altro client, non ci sono protezioni varie
 - Scritta una piccola lib UDP
 - Inizializzazione della fase di gioco (solo in locale) (ovviamente va rivista e mancano i timeout ecc.)
