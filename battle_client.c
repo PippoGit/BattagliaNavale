@@ -70,6 +70,10 @@ void print_playerlist_from_server()
     if(strncmp(name, pl_conf.name_, MAX_USERNAME_LEN))
       printf("\t%s (%s)\n", name, playerstatus_desc(stat));
   }
+  if(list_size == 1)
+    printf("Al momento non ci sono altri giocatori connessi\n");
+
+  printf("\n");
 }
 
 void init_map(enum map_tile m[])

@@ -240,7 +240,7 @@ void server_func(int *a_socket)
   if(tcp_recv(*a_socket, buffer) < 0)
     sprintf(buffer, "%d %s", BYE, get_player_by_socket(*a_socket));
 
-  printf("DEBUG: received cmd %s\n", buffer);
+  //printf("DEBUG: received cmd %s\n", buffer);
 
   sscanf(buffer, "%d", &msg_type);
 
@@ -252,6 +252,7 @@ void server_func(int *a_socket)
 
     case LIST:
       //print_player_list();
+      printf("%s ha richiesto la lista dei giocatori\n", get_player_by_socket(*a_socket));
       send_player_list(*a_socket);
       break;
 
