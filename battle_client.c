@@ -44,7 +44,7 @@ void connect_to_server(const char* ip, const int p)
 
   if(response == ERROR)
   {
-    printf("Il nome scelto risulta gia registrato.\n");
+    printf("Il nome scelto risulta gia' registrato.\n");
     exit(-1);
   }
   //if everything is ok

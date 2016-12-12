@@ -8,6 +8,7 @@ A simple net game developed in C using socket TCP/UDP
   - porta (verificare se quella inserita è veramente una porta)
 
 - dovrei mettere anche il timeout in fase di init_game (?) (fase accept/decline + create_map)
+- Se fallisce una recv sul socket TCP Server devo uccidere il client (tanto non ha senso tenerlo vivo)
 
 
 # TODO

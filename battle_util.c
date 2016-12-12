@@ -22,8 +22,10 @@ void set_fdset(fd_set *set, int desc)
 int select_fdset(fd_set *set, int set_size)
 {
   int result = select(set_size+1, set, NULL, NULL, NULL);
-  if(result < 0)
+  if(result < 0) {
     perror("Error during file descriptor select");
+    exit(-1);
+  }
   return result;
 }
 
