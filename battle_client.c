@@ -277,6 +277,21 @@ int have_i_lost()
   return ship_left==0;
 }
 
+void you_win()
+{
+  char buffer[DEFAULT_BUFF_SIZE];
+  printf("La partita e' terminata. Hai vinto!\n\n");
+
+  //Server, i am free again!
+  sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
+  tcp_send(srv_conn.srv_socket_, buffer);
+
+  //shutdown pvp connection
+  close(current_game.pvp_socket_);
+
+  current_state = MENU;
+}
+
 void shot(int position)
 {
   int response = -1;
@@ -292,7 +307,12 @@ void shot(int position)
   udp_send(current_game.pvp_socket_, buffer);
 
   //wait for response
-  udp_recv(current_game.pvp_socket_, buffer);
+  if(udp_recv_timeout(current_game.pvp_socket_, buffer) < 0) //check timeout
+  {
+    printf("L'avversario si e' disconnesso o si e' verificato un timeout.\n");
+    return you_win();
+  }
+
   sscanf(buffer, "%d", &response);
 
   if(response == MISS)
@@ -308,21 +328,6 @@ void shot(int position)
     printf("%s dice: colpito! :)\n", current_game.pl2_.name_);
   }
 
-}
-
-void you_win()
-{
-  char buffer[DEFAULT_BUFF_SIZE];
-  printf("La partita e' terminata. Hai vinto!\n\n");
-
-  //Server, i am free again!
-  sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
-  tcp_send(srv_conn.srv_socket_, buffer);
-
-  //shutdown pvp connection
-  close(current_game.pvp_socket_);
-
-  current_state = MENU;
 }
 
 void update_my_map(char *msg)
@@ -355,7 +360,8 @@ void update_my_map(char *msg)
 
   if(have_i_lost()) {
     printf("Le navi a tua disposizione sono finite. Hai perso.\n\n");
-    //send that i have lost and quit somehow
+
+    //send that i have lost
     sprintf(buffer, "%d", I_LOST);
     udp_send(current_game.pvp_socket_, buffer);
 
@@ -368,6 +374,35 @@ void update_my_map(char *msg)
 
     current_state = MENU;
   }
+}
+
+void surrender()
+{
+  char buffer[DEFAULT_BUFF_SIZE];
+
+  sprintf(buffer, "%d", SURRENDER);
+  udp_send(current_game.pvp_socket_, buffer);
+
+  close(current_game.pvp_socket_);
+
+  sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
+  tcp_send(srv_conn.srv_socket_, buffer);
+
+  printf("Disconnessione avvenuta con successo: TI SEI ARRESO\n\n");
+
+  current_state = MENU;
+}
+
+void input_timeout()
+{
+  char buffer[DEFAULT_BUFF_SIZE];
+
+  printf("\nSei stato troppo tempo inattivo, la partita e' terminata: HAI PERSO\n\n");
+  close(current_game.pvp_socket_);
+
+  sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
+  tcp_send(srv_conn.srv_socket_, buffer);
+  current_state = MENU;
 }
 
 void handle_cmd(int cmd, char *param)
@@ -404,37 +439,34 @@ void handle_cmd(int cmd, char *param)
       print_map(current_game.pl2_map_);
       break;
     case DISCONNECT:
-      printf("ti sei arreso\n\n");
-
-      //////////////////////////////////////////////////// SOLUZIONE TEMPORANEA
-      char buffer[DEFAULT_BUFF_SIZE];
-      sprintf(buffer, "%d", I_LOST);
-      udp_send(current_game.pvp_socket_, buffer);
-
-      close(current_game.pvp_socket_);
-
-      //Server, i am free again!
-      sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
-      tcp_send(srv_conn.srv_socket_, buffer);
-      current_state = MENU;
-      //////////////////////////////////////////////////////
+      surrender();
       break;
     case SHOT:
       printf("hai sparato in posizione %s\n", param);
       shot(atoi(param));
       break;
 
+    case INPUT_TIMEOUT:
+      input_timeout();
+      break;
     default:
       printf("Comando non riconosciuto o non valido...\n");
   }
 }
 
-int fetch_cmd(char *param)
+int fetch_cmd(char *param, int timeout)
 {
-  int cmd = -1;
+  int cmd = -1, byte_read;
   char *buffer = NULL;
 
-  scan_input(&buffer);
+  if(timeout)
+  {
+    byte_read = scan_input_poll(&buffer, INPUT_TIMEOUT_SEC);
+    if(byte_read == 0)
+      return INPUT_TIMEOUT;
+  }
+  else
+    scan_input(&buffer);
 
   if(current_state == MENU)
   {
@@ -482,7 +514,7 @@ int wait_for_cmd_or_socket()
 
   if(is_set(&read_fds, 0))
   {
-    cmd = fetch_cmd(param);
+    cmd = fetch_cmd(param, 0);
   }
 
   if(is_set(&read_fds, srv_conn.srv_socket_))
@@ -504,20 +536,27 @@ void game_mode()
   if(current_game.my_turn_)
   {
     do {
+      printf("E' il tuo turno\n");
+
       print_prompt();
       fflush(stdout);
-      cmd = fetch_cmd(param); //i should wait here
+      cmd = fetch_cmd(param, 1); //i should wait here (check timeout)
       handle_cmd(cmd, param);
     } while(cmd < 0 || cmd == SHOW);
   }
   else
   {
-    printf("Aspetta il turno dell'avversario...\n");
-    udp_recv(current_game.pvp_socket_, buffer);
-    printf("DEBUG: ho ricevuto %s\n", buffer);
-    update_my_map(buffer);
+    printf("E' il turno di %s\n", current_game.pl2_.name_);
+    if(udp_recv_timeout(current_game.pvp_socket_, buffer) < 0) //check timeout
+    {
+      printf("L'avversario si e' disconnesso o si e' verificato un timeout.\n");
+      you_win();
+    }
+    //printf("DEBUG: ho ricevuto %s\n", buffer);
+    else
+      update_my_map(buffer);
   }
-  current_game.my_turn_ = !current_game.my_turn_;  //cambio il turno
+  current_game.my_turn_ = !current_game.my_turn_;  //change turn
   free(wait);
 }
 

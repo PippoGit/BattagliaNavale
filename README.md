@@ -2,22 +2,24 @@
 A simple net game developed in C using socket TCP/UDP
 
 # Prossime cose da fare
-- Cominciare a pensare ad un modo per rendere solido il sistema (gestione input utente)
-- Cominciare a fare i timeout (socket udp e input in pvp)
+- verificare gli input:
+  - nome (adesso muore tutto, forse non è la cosa migliore)
+  - ip (verificare se quello inserito è veramente un ip)
+  - porta (verificare se quella inserita è veramente una porta)
+
 
 # TODO
 - Verificare se in fase di chiusura del client ci siano strutture dati da eliminare
 - Terminazione server (?)
-- verificare i parametri (ip porta)
 
 - GESTIONE ERRORI SULLE VARIE FUNZIONI DEL SOCKET (ORA SE SUCCEDE QUALCOSA MUORE TUTTO MALISSIMO)
-- GESTIONE TIME OUT SU TUTTO
 - RIVEDERE TUTTE LE RECV
-- GESTIRE DISCONNESSIONE IMPROVVISA utente
 - GESTIRE DISCONNESSIONE IMPROVVISA SERVER (?)
-- (RISCRIVERE PARTE SERVER SELECT() USANDO LA MIA LIB???ANKENO)
 
 # Cose che penso di aver fatto
+- Progetto completato e funzionante, mancano test, robustezza sugli input e opportuna gestione errori su funzioni socket (12/12/2016)
+- Timeout funzionanti
+- Gestita disconnessione improvvisa di un utente
 - disconnect udp funziona (forse non è la cosa più del mondo ma va)
 - Ora è possibile fare una partita con un altro client, non ci sono protezioni varie
 - Scritta una piccola lib UDP

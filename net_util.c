@@ -168,11 +168,21 @@ int tcp_recv(int socket, char *msg)
   int msg_len, ret;
 
   //recv msg len (how many bytes)
-  recv(socket, (void *) &msg_len, sizeof(int), 0);
+  ret = recv(socket, (void *) &msg_len, sizeof(int), 0);
+  //printf("DEBUG: %d/%lu Byte ricevuti\n", ret, sizeof(int));
+
+  if(ret < (int) sizeof(int)) //timeout
+    return -1;
+
   msg_len = ntohl(msg_len);
 
   //recv buffer msg
   ret = recv(socket, (void *) msg, msg_len, 0);
+  //printf("DEBUG: %d/%d Byte ricevuti\n", ret, msg_len);
+
+  if(ret < msg_len)
+    ret = -1;
+
   return ret;
 }
 
@@ -208,4 +218,30 @@ int udp_recv(int socket, char*msg)
 int udp_send(int socket, const char*msg)
 {
   return tcp_send(socket, msg);
+}
+
+int udp_recv_timeout(int socket, char*msg)
+{
+    int byte_rec;
+    set_timeout(socket);
+    byte_rec = udp_recv(socket, msg);
+    reset_timeout(socket);
+
+    return byte_rec;
+}
+
+void set_timeout(int sock) {
+    struct timeval tv;
+    tv.tv_sec = INPUT_TIMEOUT_SEC;
+    tv.tv_usec = 0;
+
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
+}
+
+void reset_timeout(int sock) {
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
 }

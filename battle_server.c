@@ -47,6 +47,20 @@ void remove_player(const char* name)
   }
 }
 
+char* get_player_by_socket(int socket)
+{
+  player_list_element_t *node = list;
+  while(node != NULL)
+  {
+    if(node->pl.socket_ == socket)
+    {
+      return node->pl.name_;
+    }
+    node = node->next;
+  }
+  return NULL;
+}
+
 int search_player(const char* name, addr_t *addr, int *socket, int *port)
 {
   player_list_element_t *node = get_node(name);
@@ -223,7 +237,8 @@ void server_func(int *a_socket)
 
   //read cmd
   memset(buffer, 0, sizeof(buffer));
-  tcp_recv(*a_socket, buffer);
+  if(tcp_recv(*a_socket, buffer) < 0)
+    sprintf(buffer, "%d %s", BYE, get_player_by_socket(*a_socket));
 
   printf("DEBUG: received cmd %s\n", buffer);
 

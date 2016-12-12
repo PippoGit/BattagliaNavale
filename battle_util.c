@@ -56,7 +56,6 @@ int remove_newline(char* buffer) {
     return 1;
 }
 
-/*
 int scan_input_poll(char** buffer, int sec) {
     struct pollfd mypoll = { 0, POLLIN|POLLPRI };
 
@@ -64,7 +63,6 @@ int scan_input_poll(char** buffer, int sec) {
         return scan_input(buffer);
     return 0;
 }
-*/
 
 void flush_input() {
     int n;
