@@ -7,6 +7,8 @@ A simple net game developed in C using socket TCP/UDP
   - ip (verificare se quello inserito è veramente un ip)
   - porta (verificare se quella inserita è veramente una porta)
 
+- dovrei mettere anche il timeout in fase di init_game (?) (fase accept/decline + create_map)
+
 
 # TODO
 - Verificare se in fase di chiusura del client ci siano strutture dati da eliminare
