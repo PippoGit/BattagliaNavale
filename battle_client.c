@@ -222,7 +222,12 @@ void request_from_player(char *msg)
   //ask player 1 to join the game
   printf("\n%s vuole sfidarti. Accetti la sfida? (y/n) ", name);
   fflush(stdout);
-  scan_input(&line);
+  if(!scan_input_poll(&line, INPUT_TIMEOUT_SEC))
+  {
+    printf("\nIl tempo per accettare la richiesta e' scaduto.");
+    line = (char*) malloc(sizeof(char)*2);
+    strncpy(line, "n", 2);
+  }
 
   switch(line[0])
   {
