@@ -6,6 +6,7 @@ const char* playerstatus_desc(enum player_status stat)
   {
     case FREE: return "libero";
     case OCCUPIED: return "occupato";
+    default: return ""; //this should never actually happen
   }
 }
 

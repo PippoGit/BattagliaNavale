@@ -257,6 +257,7 @@ void greetings()
   printf("!who --> mostra l'elenco dei client connessi al server\n");
   printf("!connect username --> avvia una partita con l'utente username\n");
   printf("!quit --> disconnette il client dal server\n");
+  printf("\n");
 }
 
 void print_prompt()
@@ -275,6 +276,7 @@ void print_man()
   printf("!shot square --> fai un tentativo con la casella square\n");
   printf("!show --> visualizza griglia di gioco\n");
   printf("!disconnect --> disconnette il client dall'attuale partita\n");
+  printf("\n");
 }
 
 int have_i_lost()
@@ -551,7 +553,7 @@ void game_mode()
       fflush(stdout);
       cmd = fetch_cmd(param, 1); //i should wait here (check timeout)
       handle_cmd(cmd, param);
-    } while(cmd < 0 || cmd == SHOW);
+    } while(cmd < 0 || cmd == SHOW || cmd = GHELP);
   }
   else
   {
