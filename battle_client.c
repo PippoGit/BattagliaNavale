@@ -207,13 +207,13 @@ void connect_to_player(char *player)
       if(response)
       {
         //request accepted
-        printf("Richiesta accettata!\n");
+        printf("Richiesta accettata!\n\n");
         //invited player always do the first move
         init_game(player, pl2_ip, pl2_port, 0);
       }
       else
       {
-        printf("Richiesta rifiutata.\n");
+        printf("Richiesta rifiutata.\n\n");
       }
   }
 
@@ -242,7 +242,7 @@ void request_from_player(char *msg)
   {
     case 'n':
     case 'N':
-      printf("\nRichiesta rifiutata.\n");
+      printf("\nRichiesta rifiutata.\n\n");
       sprintf(buffer, "%d %s %s", REQ_DECLINED, pl_conf.name_, name);
       tcp_send(srv_conn.srv_socket_, buffer);
       break;
@@ -252,7 +252,7 @@ void request_from_player(char *msg)
       sprintf(buffer, "%d %s %s", REQ_ACCEPTED, pl_conf.name_, name);
       tcp_send(srv_conn.srv_socket_, buffer);
 
-      printf("\nRichiesta accettata...\n");
+      printf("\nRichiesta accettata...\n\n");
       //invited player always do the first move
       init_game(name, pl2_ip, pl2_port, 1);
   }
