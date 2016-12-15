@@ -17,6 +17,7 @@ A simple net game developed in C using socket TCP/UDP
 - GESTIRE DISCONNESSIONE IMPROVVISA SERVER (?)
 
 # Cose che penso di aver fatto
+- Aggiunto check dei parametri di input (un po' alla bona ma itssumthing)
 - Progetto completato e funzionante, mancano test, robustezza sugli input e opportuna gestione errori su funzioni socket (12/12/2016)
 - Timeout funzionanti
 - Gestita disconnessione improvvisa di un utente
