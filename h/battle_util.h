@@ -17,4 +17,6 @@ int remove_newline(char* buffer);
 int scan_input_poll(char** buffer, int sec);
 void flush_input();
 
+
+
 #endif

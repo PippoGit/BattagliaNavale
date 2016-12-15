@@ -24,8 +24,17 @@ void init_player_one()
 {
   printf("Inserisci il tuo username:");
   scanf("%s", pl_conf.name_);
-  printf("Inserisci la porta di ascolto UDP:");
-  scanf("%d", &pl_conf.udp_port_);
+
+  while(1) {
+    printf("Inserisci la porta UDP (> 1023) di ascolto: ");
+    scanf("%d", &pl_conf.udp_port_);
+
+    if(pl_conf.udp_port_ < 1024 || pl_conf.udp_port_ > 65534) {
+      printf("Porta non utilizzabile! Riprova\n");
+      continue;
+    }
+    return;
+  }
 }
 
 void connect_to_server(const char* ip, const int p)
@@ -330,13 +339,13 @@ void shot(int position)
   {
     sprintf(buffer, "%d", MISS);
     current_game.pl2_map_[position] = MISSED_SHIP;
-    printf("%s dice: mancato :(\n", current_game.pl2_.name_);
+    printf("%s dice: mancato :(\n\n", current_game.pl2_.name_);
   }
   else
   {
     sprintf(buffer, "%d", HIT);
     current_game.pl2_map_[position] = HIT_SHIP;
-    printf("%s dice: colpito! :)\n", current_game.pl2_.name_);
+    printf("%s dice: colpito! :)\n\n", current_game.pl2_.name_);
   }
 
 }
@@ -357,13 +366,13 @@ void update_my_map(char *msg)
   {
     sprintf(buffer, "%d", MISS);
     current_game.pl1_map_[position] = MISSED_SHIP;
-    printf("%s spara in %d: mancato :)\n", current_game.pl2_.name_, position);
+    printf("%s spara in %d: mancato :)\n\n", current_game.pl2_.name_, position);
   }
   else
   {
     sprintf(buffer, "%d", HIT);
     current_game.pl1_map_[position] = HIT_SHIP;
-    printf("%s spara in %d: colpito :(\n", current_game.pl2_.name_, position);
+    printf("%s spara in %d: colpito :(\n\n", current_game.pl2_.name_, position);
   }
 
   //send response
@@ -553,7 +562,7 @@ void game_mode()
       fflush(stdout);
       cmd = fetch_cmd(param, 1); //i should wait here (check timeout)
       handle_cmd(cmd, param);
-    } while(cmd < 0 || cmd == SHOW || cmd = GHELP);
+    } while(cmd < 0 || cmd == SHOW || cmd == GHELP);
   }
   else
   {
@@ -576,7 +585,7 @@ int main(int argc, char* argv[])
   current_state = MENU;
 
   //check parameters
-  if(argc < 3)
+  if(argc < 3 || !valid_ip_addr(argv[1]))
   {
     printf("Errore nell'inserimento dei parametri! Ti serve un aiuto?\n\t.battle_client.c <host remoto> <porta>\n");
     exit(-1);

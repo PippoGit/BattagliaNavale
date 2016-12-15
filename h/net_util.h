@@ -19,4 +19,7 @@ int udp_recv_timeout(int socket, char*msg);
 void set_timeout(int sock);
 void reset_timeout(int sock);
 
+int valid_ip_addr(char* addr);
+int valid_port(char* addr);
+
 #endif

@@ -245,3 +245,9 @@ void reset_timeout(int sock) {
 
     setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof(struct timeval));
 }
+
+int valid_ip_addr(char* addr) {
+    struct sockaddr_in addr_in;
+    int result = inet_pton(AF_INET, addr, &(addr_in.sin_addr));
+    return result != 0;
+}
