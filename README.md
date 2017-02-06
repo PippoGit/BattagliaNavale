@@ -1,5 +1,5 @@
 # BattagliaNavale
-A simple net game developed in C using socket TCP/UDP
+A simple game developed in C using socket TCP/UDP
 
 # Prossime cose da fare
 - verificare gli input:
