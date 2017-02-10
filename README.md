@@ -10,7 +10,7 @@ A simple game developed in C using socket TCP/UDP
 
 # TODO
 - Verificare se in fase di chiusura del client ci siano strutture dati da eliminare
-- Terminazione server (?)
+- Terminazione server
 
 - GESTIONE ERRORI SULLE VARIE FUNZIONI DEL SOCKET (ORA SE SUCCEDE QUALCOSA MUORE TUTTO MALISSIMO)
 - RIVEDERE TUTTE LE RECV
