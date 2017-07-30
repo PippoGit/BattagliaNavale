@@ -616,4 +616,7 @@ int main(int argc, char* argv[])
     else
       game_mode();
   }
+  
+  //unreachable point
+  return 0;
 }
