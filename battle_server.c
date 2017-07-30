@@ -302,4 +302,6 @@ int main(int argc, char* argv[]) {
 
   socket = tcp_server(atoi(argv[1]));
   tcp_start_server(socket, server_func);
+  
+  return 0;
 }
