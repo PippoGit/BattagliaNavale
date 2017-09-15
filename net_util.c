@@ -205,6 +205,7 @@ int tcp_send(int socket, const char *msg)
   {
     //Errore
     printf("Errore nella send...\n");
+    return -1;
     //exit(-1);
   }
   return ret;
