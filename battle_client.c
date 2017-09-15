@@ -9,6 +9,18 @@ fd_set fds;
 enum prg_state current_state;
 game_t current_game;
 
+void input_timeout()
+{
+  char buffer[DEFAULT_BUFF_SIZE];
+
+  printf("\nSei stato troppo tempo inattivo, la partita e' terminata: HAI PERSO\n\n");
+  close(current_game.pvp_socket_);
+
+  sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
+  tcp_send(srv_conn.srv_socket_, buffer);
+  current_state = MENU;
+}
+
 void destroy_battle()
 {
   char buffer[DEFAULT_BUFF_SIZE];
@@ -324,7 +336,13 @@ void shot(int position)
 
   //send attack
   sprintf(buffer, "%d %d", ATK, position);
-  udp_send(current_game.pvp_socket_, buffer);
+  response = udp_send(current_game.pvp_socket_, buffer);
+  if(response == -1) //an error occur
+  {
+    printf("\n\r Mhh... qualcosa non sta funzionando. Potresti essere stato troppo tempo inattivo e la connessione è stata chiusa.");
+    input_timeout();
+    return;
+  }
 
   //wait for response
   if(udp_recv_timeout(current_game.pvp_socket_, buffer) < 0) //check timeout
@@ -410,18 +428,6 @@ void surrender()
 
   printf("Disconnessione avvenuta con successo: TI SEI ARRESO\n\n");
 
-  current_state = MENU;
-}
-
-void input_timeout()
-{
-  char buffer[DEFAULT_BUFF_SIZE];
-
-  printf("\nSei stato troppo tempo inattivo, la partita e' terminata: HAI PERSO\n\n");
-  close(current_game.pvp_socket_);
-
-  sprintf(buffer, "%d %s", SET_FREE, pl_conf.name_);
-  tcp_send(srv_conn.srv_socket_, buffer);
   current_state = MENU;
 }
 
@@ -616,7 +622,7 @@ int main(int argc, char* argv[])
     else
       game_mode();
   }
-  
+
   //unreachable point
   return 0;
 }
